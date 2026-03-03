@@ -6,7 +6,6 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-// New implementation using SlotMap
 use slotmap::new_key_type;
 
 // Create all the Id types
@@ -20,7 +19,7 @@ new_key_type! {
     pub struct PseudoatomId;
 }
 new_key_type! {
-    pub struct SubstituentId;
+    pub struct FragmentId;
 }
 new_key_type! {
     pub struct MoleculeId;
@@ -35,17 +34,18 @@ pub enum Entity {
     Bond(BondId),
     Atom(AtomId),
     Pseudoatom(PseudoatomId),
-    Substituent(SubstituentId),
+    Fragment(FragmentId),
     Molecule(MoleculeId),
     Object(ObjectId),
 }
 
+/// Things that can form bonds.
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
 pub enum Bondable {
     Bond(BondId),
     Atom(AtomId),
     Pseudoatom(PseudoatomId),
-    Node(SubstituentId),
+    Fragment(FragmentId),
 }
 
 impl From<Bondable> for Entity {
@@ -54,7 +54,7 @@ impl From<Bondable> for Entity {
             Bondable::Bond(id) => Entity::Bond(id),
             Bondable::Atom(id) => Entity::Atom(id),
             Bondable::Pseudoatom(id) => Entity::Pseudoatom(id),
-            Bondable::Node(id) => Entity::Substituent(id),
+            Bondable::Fragment(id) => Entity::Fragment(id),
         }
     }
 }
@@ -93,7 +93,7 @@ pub enum Annotatable {
     Bond(BondId),
     Atom(AtomId),
     Pseudoatom(PseudoatomId),
-    Substituent(SubstituentId),
+    Fragment(FragmentId),
     Molecule(MoleculeId),
 }
 

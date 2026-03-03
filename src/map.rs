@@ -17,7 +17,7 @@ pub struct MolMap {
     pub bonds: SlotMap<BondId, Bond>,
     pub atoms: SlotMap<AtomId, Atom>,
     pub pseudoatoms: SlotMap<PseudoatomId, Pseudoatom>,
-    pub nodes: SlotMap<SubstituentId, Substituent>,
+    pub fragments: SlotMap<FragmentId, Fragment>,
     pub molecules: SlotMap<MoleculeId, Molecule>,
     pub objects: SlotMap<ObjectId, Object>,
 }
@@ -33,7 +33,7 @@ impl Default for MolMap {
             bonds: SlotMap::with_capacity_and_key(500),
             atoms: SlotMap::with_capacity_and_key(500),
             pseudoatoms: SlotMap::with_capacity_and_key(500),
-            nodes: SlotMap::with_capacity_and_key(1000),
+            fragments: SlotMap::with_capacity_and_key(1000),
             molecules: SlotMap::with_capacity_and_key(50),
             objects: SlotMap::with_capacity_and_key(100),
         }

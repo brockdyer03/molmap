@@ -6,7 +6,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use crate::{BondId, MolMap, SubstituentId, ObjectId, PseudoatomId};
+use crate::{BondId, MolMap, FragmentId, ObjectId, PseudoatomId};
 
 // Something that has a "symbol" like a normal atom but represents something else
 // May have an unknown composition like R, or a known structure like Ph
