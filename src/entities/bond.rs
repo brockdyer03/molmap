@@ -6,7 +6,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use crate::{BondId, Bondable, MolMap};
+use crate::{BondId, Bondable, BondingPartner, MolMap};
 
 #[derive(Debug, Eq, PartialEq, Clone, Copy)]
 pub enum BondType {
@@ -21,14 +21,24 @@ pub(crate) struct Bond {
     pub(crate) id: BondId,
     pub(crate) bond_type: BondType,
     pub(crate) order: f32,
+    pub(crate) start: BondingPartner,
+    pub(crate) end: BondingPartner,
 }
 
 impl Bond {
-    pub(crate) fn new(id: BondId, bond_type: BondType, order: f32) -> Self {
+    pub(crate) fn new(
+        id: BondId,
+        bond_type: BondType,
+        order: f32,
+        start: BondingPartner,
+        end: BondingPartner,
+    ) -> Self {
         Self {
             id,
             bond_type,
             order,
+            start,
+            end,
         }
     }
 }

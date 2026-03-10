@@ -11,8 +11,11 @@ use slotmap::SlotMap;
 
 use std::hash::RandomState;
 
-use crate::{Element, bond::BondType, entities::*, id::*};
+use crate::{Element, bond::BondType, element::MassNumber, entities::*, id::*};
 
+/// An extensible arena-like data structure to represent a set of chemical
+/// entities and the relationships between them, as a molecular graph.
+#[derive(Debug)]
 pub struct MolMap<Extension> {
     pub(crate) bonds: SlotMap<BondId, Bond>,
     pub(crate) atoms: SlotMap<AtomId, Atom>,
@@ -45,5 +48,42 @@ impl<E: Default> Default for MolMap<E> {
 impl<E: Default> MolMap<E> {
     pub fn new() -> Self {
         Self::default()
+    }
+}
+
+impl<E> MolMap<E> {
+    // Methods to add entities
+
+    /// Add an `Atom` to the `MolMap`.
+    pub fn add_atom(&mut self, element: Element) -> AtomId {
+        self.atoms.insert_with_key(|id| Atom::new(id, element))
+    }
+
+    /// Add a `Pseudoatom` to the `MolMap`.
+    pub fn add_pseudoatom(&mut self, symbol: &str) -> PseudoatomId {
+        self.pseudoatoms
+            .insert_with_key(|id| Pseudoatom::new(id, symbol.to_owned()))
+    }
+
+    /// Add a `Fragment` to the `MolMap` with a single initial atom.
+    pub fn add_fragment(&mut self, centre: Atomlike) -> FragmentId {
+        self.fragments.insert_with_key(|id| {
+            Fragment::new(
+                id,
+                fragment::FragmentBondingCentre::Single(centre),
+                &[centre.into()],
+            )
+        })
+    }
+
+    /// Add an empty `Molecule` to the `MolMap`.
+    pub fn add_molecule(&mut self) -> MoleculeId {
+        self.molecules.insert_with_key(Molecule::new)
+    }
+
+    /// Create a new `Bond` between two bondable entities.
+    pub fn create_bond(&mut self, start: Bondable, end: Bondable) -> BondId {
+        self.bonds
+            .insert_with_key(|id| Bond::new(id, BondType::Covalent, 1.0, start.into(), end.into()))
     }
 }

@@ -50,7 +50,7 @@ pub enum Bondable {
     //Bond(BondId),
     Atom(AtomId),
     Pseudoatom(PseudoatomId),
-    Fragment(FragmentId),
+    AmbiguouslyBondingFragment(FragmentId),
 }
 
 impl From<Bondable> for Entity {
@@ -59,7 +59,19 @@ impl From<Bondable> for Entity {
             //Bondable::Bond(id) => Entity::Bond(id),
             Bondable::Atom(id) => Entity::Atom(id),
             Bondable::Pseudoatom(id) => Entity::Pseudoatom(id),
-            Bondable::Fragment(id) => Entity::Fragment(id),
+            Bondable::AmbiguouslyBondingFragment(id) => Entity::Fragment(id),
+        }
+    }
+}
+
+impl From<Bondable> for BondingPartner {
+    fn from(bondable: Bondable) -> Self {
+        match bondable {
+            Bondable::Atom(id) => BondingPartner::Atom(id),
+            Bondable::Pseudoatom(id) => BondingPartner::Pseudoatom(id),
+            Bondable::AmbiguouslyBondingFragment(id) => {
+                BondingPartner::AmbiguouslyBondingFragment(id)
+            }
         }
     }
 }
@@ -70,7 +82,7 @@ pub enum BondingPartner {
     // BondingSystem(BondingSystemId),  // future
     Atom(AtomId),
     Pseudoatom(PseudoatomId),
-    FragmentWithAmbiguousCentre(FragmentId),
+    AmbiguouslyBondingFragment(FragmentId),
 }
 
 impl From<BondingPartner> for Entity {
@@ -78,7 +90,7 @@ impl From<BondingPartner> for Entity {
         match partner {
             BondingPartner::Atom(id) => Entity::Atom(id),
             BondingPartner::Pseudoatom(id) => Entity::Pseudoatom(id),
-            BondingPartner::FragmentWithAmbiguousCentre(id) => Entity::Fragment(id),
+            BondingPartner::AmbiguouslyBondingFragment(id) => Entity::Fragment(id),
         }
     }
 }
@@ -110,13 +122,21 @@ impl From<Atomlike> for Bondable {
     }
 }
 
+impl From<Atomlike> for Fundamental {
+    fn from(atomlike: Atomlike) -> Self {
+        match atomlike {
+            Atomlike::Atom(id) => Fundamental::Atom(id),
+            Atomlike::Pseudoatom(id) => Fundamental::Pseudoatom(id),
+        }
+    }
+}
+
 /// The basic building blocks of a `MolMap` that do not group other entities.
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
 pub enum Fundamental {
     Bond(BondId),
     Atom(AtomId),
     Pseudoatom(PseudoatomId),
-    //Object(ObjectId),
 }
 
 impl From<Fundamental> for Entity {
@@ -125,7 +145,6 @@ impl From<Fundamental> for Entity {
             Fundamental::Bond(id) => Entity::Bond(id),
             Fundamental::Atom(id) => Entity::Atom(id),
             Fundamental::Pseudoatom(id) => Entity::Pseudoatom(id),
-            //Fundamental::Object(id) => Entity::Object(id),
         }
     }
 }

@@ -6,7 +6,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use crate::{AtomId, Atomlike, BondId, FragmentId, IdError, MolMap, PseudoatomId};
+use crate::{AtomId, Atomlike, BondId, FragmentId, Fundamental, IdError, MolMap, PseudoatomId};
 
 // Maybe better to use Nodes after all?
 // Presumably getting the length of a Vec is almost zero cost
@@ -29,19 +29,19 @@ pub enum FragmentBondingCentre {
 pub(crate) struct Fragment {
     pub(crate) id: FragmentId,
     pub(crate) centre: FragmentBondingCentre,
-    pub(crate) atoms: Vec<AtomId>,
-    pub(crate) pseudoatoms: Vec<PseudoatomId>,
-    pub(crate) bonds: Vec<BondId>,
+    pub(crate) members: Vec<Fundamental>,
 }
 
 impl Fragment {
-    pub(crate) fn new(id: FragmentId, centre: FragmentBondingCentre) -> Self {
+    pub(crate) fn new(
+        id: FragmentId,
+        centre: FragmentBondingCentre,
+        members: &[Fundamental],
+    ) -> Self {
         Self {
             id,
             centre,
-            atoms: Vec::new(),
-            pseudoatoms: Vec::new(),
-            bonds: Vec::new(),
+            members: members.to_vec(),
         }
     }
 }

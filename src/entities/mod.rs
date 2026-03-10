@@ -13,9 +13,9 @@ pub mod molecule;
 //pub mod objects;
 pub mod pseudoatom;
 
-pub use atom::{Atom, AtomView, AtomViewMut};
-pub use bond::{Bond, BondView, BondViewMut};
-pub use fragment::{Fragment, FragmentView, FragmentViewMut};
-pub use molecule::{Molecule, MoleculeView, MoleculeViewMut};
+pub(crate) use atom::{Atom, AtomView, AtomViewMut};
+pub(crate) use bond::{Bond, BondView, BondViewMut};
+pub(crate) use fragment::{Fragment, FragmentView, FragmentViewMut};
+pub(crate) use molecule::{Molecule, MoleculeView, MoleculeViewMut};
+pub(crate) use pseudoatom::{Pseudoatom, PseudoatomView, PseudoatomViewMut};
 //pub use objects::{Object, ObjectView, ObjectViewMut};
-pub use pseudoatom::{Pseudoatom, PseudoatomView, PseudoatomViewMut};
