@@ -6,7 +6,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use crate::{BondId, Bondable, MolMap, ObjectId};
+use crate::{BondId, Bondable, BondingPartner, MolMap};
 
 #[derive(Debug, Eq, PartialEq, Clone, Copy)]
 pub enum BondType {
@@ -17,39 +17,45 @@ pub enum BondType {
 }
 
 #[derive(Debug)]
-pub struct Bond {
-    pub id: BondId,
-    pub bond_type: BondType,
-    pub order: f32,
+pub(crate) struct Bond {
+    pub(crate) id: BondId,
+    pub(crate) bond_type: BondType,
+    pub(crate) order: f32,
+    pub(crate) start: BondingPartner,
+    pub(crate) end: BondingPartner,
 }
 
 impl Bond {
-    pub fn new(
+    pub(crate) fn new(
         id: BondId,
         bond_type: BondType,
         order: f32,
+        start: BondingPartner,
+        end: BondingPartner,
     ) -> Self {
         Self {
             id,
             bond_type,
             order,
+            start,
+            end,
         }
     }
 }
 
 #[derive(Clone, Copy)]
-pub struct BondView<'a> {
-    pub molmap: &'a MolMap,
+pub struct BondView<'a, E> {
+    pub molmap: &'a MolMap<E>,
     pub id: BondId,
 }
 
-impl<'a> From<BondView<'a>> for BondId {
-    fn from(view: BondView<'a>) -> Self {
+impl<'a, E> From<BondView<'a, E>> for BondId {
+    fn from(view: BondView<'a, E>) -> Self {
         view.id
     }
 }
 
-impl<'a> BondView<'a> {
+impl<'a, E> BondView<'a, E> {
     fn inner(&self) -> &'a Bond {
         self.molmap.bonds.get(self.id).unwrap()
     }
@@ -59,19 +65,19 @@ impl<'a> BondView<'a> {
     }
 }
 
-pub struct BondViewMut<'a> {
-    pub molmap: &'a mut MolMap,
+pub struct BondViewMut<'a, E> {
+    pub molmap: &'a mut MolMap<E>,
     pub id: BondId,
 }
 
-impl<'a> From<BondViewMut<'a>> for BondId {
-    fn from(view: BondViewMut<'a>) -> Self {
+impl<'a, E> From<BondViewMut<'a, E>> for BondId {
+    fn from(view: BondViewMut<'a, E>) -> Self {
         view.id
     }
 }
 
-impl<'a> BondViewMut<'a> {
-    fn as_ref(&self) -> BondView<'_> {
+impl<'a, E> BondViewMut<'a, E> {
+    fn as_ref(&self) -> BondView<'_, E> {
         BondView {
             molmap: &*self.molmap,
             id: self.id,

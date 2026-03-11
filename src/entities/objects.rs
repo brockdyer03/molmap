@@ -6,32 +6,24 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-use crate::{Annotatable, MolMap, ObjectId};
+use crate::{Anchor, MolMap, ObjectId};
 
 pub enum Object {
     Charge(Charge),
 }
 
-pub enum ChargeStyle {
-    Bare,
-    Circled,
-    PartialDelta,
-    PartialNumeric,
+pub struct ObjectView<'a, E> {
+    pub molmap: &'a MolMap<E>,
+    pub id: ObjectId,
+}
+
+pub struct ObjectViewMut<'a, E> {
+    pub molmap: &'a mut MolMap<E>,
+    pub id: ObjectId,
 }
 
 pub struct Charge {
     pub id: ObjectId,
     pub charge: f32,
-    pub charge_style: ChargeStyle,
-    pub anchor: Annotatable,
-}
-
-pub struct ObjectView<'a> {
-    pub molmap: &'a MolMap,
-    pub id: ObjectId,
-}
-
-pub struct ObjectViewMut<'a> {
-    pub molmap: &'a mut MolMap,
-    pub id: ObjectId,
+    pub anchor: Anchor,
 }
