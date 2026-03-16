@@ -12,8 +12,8 @@ use std::hash::RandomState;
 
 use crate::{Element, bond::BondType, element::MassNumber, entities::*, id::*};
 
-/// An extensible arena-like data structure to represent a set of chemical
-/// entities and the relationships between them, as a molecular graph.
+/// An extensible arena-like data structure to represent a set of chemical entities,
+/// their properties, and the relationships between them, as a molecular graph.
 #[derive(Debug)]
 pub struct MolMap<Extension> {
     pub(crate) bonds: SlotMap<BondId, Bond>,
@@ -330,5 +330,24 @@ impl<E> MolMap<E> {
                 }
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::Element;
+    
+    use super::*;
+    
+    #[test]
+    fn create_bond_between_atoms() {
+        let mut mm = MolMap::<()>::new();
+        let h1 = mm.add_atom(Element::H);
+        let h2 = mm.add_atom(Element::H);
+        let b1 = mm.create_bond(h1.into(), h2.into()).unwrap();
+        assert!(mm.atoms.get(h1).unwrap().bonds.contains(&b1));
+        assert!(mm.atoms.get(h2).unwrap().bonds.contains(&b1));
+        assert!(mm.bonds.get(b1).unwrap().start == h1.into());
+        assert!(mm.bonds.get(b1).unwrap().end == h2.into());
     }
 }
