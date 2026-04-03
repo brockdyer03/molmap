@@ -87,6 +87,7 @@ impl<E: MolMapExt> MolMap<E> {
 //    }
 //}
 
+/// Methods that apply to all MolMaps, regardless of extension
 impl<E: MolMapExt> MolMap<E> {
     // Getters
     // One method per entity type for:
@@ -263,23 +264,27 @@ impl<E: MolMapExt> MolMap<E> {
             Entity::Molecule(id) => self.contains_molecule(id),
         }
     }
+}
 
+/// Methods where each concrete MolMap type may need to add extra logic to deal with the data
+/// contained in the extension
+impl<E: MolMapExt> MolMap<E> {
     // Methods to add entities
 
-    /// Adds an `Atom` to the map.
-    pub fn add_atom(&mut self, element: Element) -> AtomId {
+    /// Adds an atom to the map.
+    pub(crate) fn _add_atom(&mut self, element: Element) -> AtomId {
         self.atoms.insert(Atom::new(element))
     }
 
-    /// Adds a `Pseudoatom` to the map.
-    pub fn add_pseudoatom(&mut self, symbol: &str) -> PseudoatomId {
+    /// Adds a pseudoatom to the map.
+    pub(crate) fn _add_pseudoatom(&mut self, symbol: &str) -> PseudoatomId {
         self.pseudoatoms.insert(Pseudoatom::new(symbol.to_owned()))
     }
 
-    /// Creates a new (single covalent) `Bond` between two bondable entities.
+    /// Creates a new (single covalent) bond between two bondable entities.
     ///
     /// Fails if either of `start` and `end` are invalid.
-    pub fn add_bond(&mut self, start: Bondable, end: Bondable) -> Result<BondId, IdError> {
+    pub(crate) fn _add_bond(&mut self, start: Bondable, end: Bondable) -> Result<BondId, IdError> {
         // Converting the bondables into `BondingPartner`s checks the IDs at the same time
         let start = self.convert_bondable(start)?;
         let end = self.convert_bondable(end)?;
@@ -311,10 +316,10 @@ impl<E: MolMapExt> MolMap<E> {
         Ok(bond_id)
     }
 
-    /// Adds a `Fragment` to the map with a single initial atom.
+    /// Adds a fragment to the map with a single initial atom.
     ///
     /// Fails if `centre` is invalid.
-    pub fn add_fragment(&mut self, centre: Atomlike) -> Result<FragmentId, IdError> {
+    pub(crate) fn _add_fragment(&mut self, centre: Atomlike) -> Result<FragmentId, IdError> {
         if !self.contains_atomlike(centre) {
             return Err(IdError);
         }
@@ -325,8 +330,8 @@ impl<E: MolMapExt> MolMap<E> {
         }))
     }
 
-    /// Adds an empty `Molecule` to the map.
-    pub fn add_molecule(&mut self) -> MoleculeId {
+    /// Adds an empty molecule to the map.
+    pub(crate) fn _add_molecule(&mut self) -> MoleculeId {
         self.molecules.insert(Molecule::new())
     }
 
@@ -334,7 +339,129 @@ impl<E: MolMapExt> MolMap<E> {
 
     // Methods to remove entities from collections
 
+    // Methods to remove collections but retain their members
+
     // Methods to remove entities entirely
+
+    /// Removes an atom from the map, as well as any bonds to it.
+    pub(crate) fn _remove_atom(&mut self, id: AtomId) {
+        if !self.contains_atom(id) {
+            return
+        }
+        // Make sure we always remove bonds first
+        let bonds = self.atoms.get(id).unwrap().bonds.clone();
+        for bond_id in bonds {
+            self._remove_bond(bond_id);
+        }
+        // Now we can safely remove the atom itself without leaving dangling bonds
+        self.atoms.remove(id);
+        todo!("Remove from any collections as well");
+    }
+
+    /// Removes a pseudoatom from the map, as well as any bonds to it.
+    pub(crate) fn _remove_pseudoatom(&mut self, id: PseudoatomId) {
+        if !self.contains_pseudoatom(id) {
+            return
+        }
+        // Make sure we always remove bonds first
+        let bonds = self.pseudoatoms.get(id).unwrap().bonds.clone();
+        for bond_id in bonds {
+            self._remove_bond(bond_id);
+        }
+        // Now we can safely remove the pseudoatom itself without leaving dangling bonds
+        self.pseudoatoms.remove(id);
+        todo!("Remove from any collections as well");
+    }
+
+    /// Removes a bond from the map (but not its bonding partners).
+    pub(crate) fn _remove_bond(&mut self, id: BondId) {
+        if let Some(bond) = self.bonds.remove(id) {
+            for bonding_partner in [bond.start, bond.end] {
+                match bonding_partner {
+                    BondingPartner::Atom(atom_id) => {
+                        let mut atom = self.atoms.get_mut(atom_id).expect("Bonds are always removed before their bonding partners");
+                        let pos = atom.bonds.iter().position(|x| *x == id).expect("Bond should be listed in the bonding partner's bonds until deletion");
+                        atom.bonds.remove(pos);
+                    },
+                    BondingPartner::Pseudoatom(pseudoatom_id) => {
+                        let mut pseudoatom = self.pseudoatoms.get_mut(pseudoatom_id).expect("Bonds are always removed before their bonding partners");
+                        let pos = pseudoatom.bonds.iter().position(|x| *x == id).expect("Bond should be listed in the bonding partner's bonds until deletion");
+                        pseudoatom.bonds.remove(pos);
+                    },
+                    BondingPartner::AmbiguouslyBondingFragment(fragment_id) => todo!(),
+                }
+            }
+        }
+    }
+
+    /// Removes a fragment from the map, as well as all of its members.
+    pub(crate) fn _remove_fragment(&mut self, id: FragmentId) {
+        todo!("Remove members first");
+        self.fragments.remove(id);
+    }
+
+    /// Removes a molecule from the map, as well as all of its members.
+    pub(crate) fn _remove_molecule(&mut self, id: MoleculeId) {
+        todo!("Remove members first");
+        self.molecules.remove(id);
+    }
+}
+
+/// Implement the above for the basic graph version of MolMap
+impl MolMap0 {
+    /// Adds an atom to the map.
+    pub fn add_atom(&mut self, element: Element) -> AtomId {
+        self._add_atom(element)
+    }
+
+    /// Adds a pseudoatom to the map.
+    pub fn add_pseudoatom(&mut self, symbol: &str) -> PseudoatomId {
+        self._add_pseudoatom(symbol)
+    }
+
+    /// Creates a new (single covalent) bond between two bondable entities.
+    ///
+    /// Fails if either of `start` and `end` are invalid.
+    pub fn add_bond(&mut self, start: Bondable, end: Bondable) -> Result<BondId, IdError> {
+        self._add_bond(start, end)
+    }
+
+    /// Adds a fragment to the map with a single initial atom.
+    ///
+    /// Fails if `centre` is invalid.
+    pub fn add_fragment(&mut self, centre: Atomlike) -> Result<FragmentId, IdError> {
+        self._add_fragment(centre)
+    }
+
+    /// Adds an empty molecule to the map.
+    pub fn add_molecule(&mut self) -> MoleculeId {
+        self._add_molecule()
+    }
+
+    /// Removes an atom from the map.
+    pub fn remove_atom(&mut self, id: AtomId) {
+        self._remove_atom(id);
+    }
+
+    /// Removes a pseudoatom from the map.
+    pub fn remove_pseudoatom(&mut self, id: PseudoatomId) {
+        self._remove_pseudoatom(id);
+    }
+
+    /// Removes a bond from the map.
+    pub fn remove_bond(&mut self, id: BondId) {
+        self._remove_bond(id);
+    }
+
+    /// Removes a fragment from the map.
+    pub fn remove_fragment(&mut self, id: FragmentId) {
+        self._remove_fragment(id);
+    }
+
+    /// Removes a molecule from the map.
+    pub fn remove_molecule(&mut self, id: MoleculeId) {
+        self._remove_molecule(id);
+    }
 }
 
 // Private methods
