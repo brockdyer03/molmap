@@ -10,16 +10,14 @@ use crate::{AtomId, BondId, Bondable, Element, FragmentId, MolMap};
 
 #[derive(Debug)]
 pub(crate) struct Atom {
-    pub(crate) id: AtomId,
     pub(crate) element: Element,
     pub(crate) bonds: Vec<BondId>,
     //pub annotations: Vec<ObjectId>,
 }
 
 impl Atom {
-    pub(crate) fn new(id: AtomId, element: Element) -> Self {
+    pub(crate) fn new(element: Element) -> Self {
         Self {
-            id,
             element,
             bonds: Vec::new(),
             //annotations: Vec::new(),
