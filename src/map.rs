@@ -10,15 +10,15 @@ use slotmap::{SlotMap, basic::Iter};
 
 use std::{fmt::Debug, hash::RandomState};
 
-use crate::{Element, bond::BondType, entities::*, id::*};
+use crate::{Element, bond::BondType, entities::*, fragment::FragmentCentre, id::*};
 
 /// An extensible arena-like data structure to represent a set of chemical entities,
 /// their properties, and the relationships between them, as a molecular graph.
 #[derive(Debug, Default)]
 pub struct MolMap<E: MolMapExt> {
-    pub(crate) bonds: SlotMap<BondId, Bond>,
     pub(crate) atoms: SlotMap<AtomId, Atom>,
     pub(crate) pseudoatoms: SlotMap<PseudoatomId, Pseudoatom>,
+    pub(crate) bonds: SlotMap<BondId, Bond>,
     pub(crate) fragments: SlotMap<FragmentId, Fragment>,
     pub(crate) molecules: SlotMap<MoleculeId, Molecule>,
     //pub(crate) objects: SlotMap<ObjectId, Object>,
@@ -51,9 +51,9 @@ impl<E: MolMapExt> MolMap<E> {
     /// to use `MolMap.with_capacity()` instead.
     pub fn new() -> Self {
         Self {
-            bonds: SlotMap::with_key(),
             atoms: SlotMap::with_key(),
             pseudoatoms: SlotMap::with_key(),
+            bonds: SlotMap::with_key(),
             fragments: SlotMap::with_key(),
             molecules: SlotMap::with_key(),
             //objects: SlotMap::with_key(),
@@ -76,9 +76,9 @@ impl<E: MolMapExt> MolMap<E> {
 //    /// - `30 * n` bonds
 //    pub fn with_capacity(n: usize) -> Self {
 //        Self {
-//            bonds: SlotMap::with_capacity_and_key(30 * n),
 //            atoms: SlotMap::with_capacity_and_key(30 * n),
 //            pseudoatoms: SlotMap::with_capacity_and_key(5 * n),
+//            bonds: SlotMap::with_capacity_and_key(30 * n),
 //            fragments: SlotMap::with_capacity_and_key(10 * n),
 //            molecules: SlotMap::with_capacity_and_key(n),
 //            //objects: SlotMap::with_capacity_and_key(2 * n),
@@ -305,12 +305,16 @@ impl<E: MolMapExt> MolMap<E> {
                     .expect("Already checked")
                     .bonds
                     .push(bond_id),
-                BondingPartner::AmbiguouslyBondingFragment(id) => self
-                    .fragments
-                    .get_mut(id)
-                    .expect("Already checked")
-                    .bonds
-                    .push(bond_id),
+                BondingPartner::AmbiguouslyBondingFragment(id) => {
+                    let FragmentCentre::Ambiguous(bonds) = &mut self
+                        .fragments
+                        .get_mut(id)
+                        .expect("Already checked")
+                        .centre else {
+                        unreachable!("Already know it's ambiguous")
+                    };
+                    bonds.push(bond_id);
+                }
             }
         }
         Ok(bond_id)
@@ -324,9 +328,8 @@ impl<E: MolMapExt> MolMap<E> {
             return Err(IdError);
         }
         Ok(self.fragments.insert(Fragment {
-            centres: vec![centre],
+            centre: FragmentCentre::Single(centre),
             members: vec![centre.into()],
-            bonds: Vec::new(),
         }))
     }
 
@@ -486,9 +489,10 @@ impl<E: MolMapExt> MolMap<E> {
                 // Get the fragment's data while also checking the ID
                 let fragment = self.fragments.get(id).ok_or(IdError)?;
                 // Use the first centre if any specified, the entire fragment if not
-                match fragment.centres.first() {
-                    Some(atomlike) => Ok((*atomlike).into()),
-                    None => Ok(BondingPartner::AmbiguouslyBondingFragment(id)),
+                match &fragment.centre {
+                    fragment::FragmentCentre::Ambiguous(_) => Ok(BondingPartner::AmbiguouslyBondingFragment(id)),
+                    fragment::FragmentCentre::Single(centre) => Ok((*centre).into()),
+                    fragment::FragmentCentre::Multiple(centres) => Ok((*centres.first().expect("Will always have at least one centre")).into()),
                 }
             }
         }
