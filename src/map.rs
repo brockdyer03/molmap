@@ -10,11 +10,11 @@ use slotmap::{SlotMap, basic::Iter};
 
 use std::{fmt::Debug, hash::RandomState};
 
-use crate::{Element, core::CoreGraph, bond::BondType, entities::*, fragment::FragmentCentre, id::*};
+use crate::{Element, graph::MolGraph, bond::BondType, entities::*, fragment::FragmentCentre, id::*};
 
 /// Trait implemented by all varieties of `MolMap`.
 /// 
-/// All concrete `MolMap` types wrap a [`CoreGraph`], so this trait exposes functionality that
+/// All concrete `MolMap` types wrap a [`MolGraph`], so this trait exposes functionality that
 /// operates on the core graph such that the different varieties of `MolMap` can be used
 /// interchangeably in many instances.
 pub trait MolMap: Debug + Default {
@@ -31,11 +31,11 @@ pub trait MolMap: Debug + Default {
 
     /// Returns the core molecular graph.
     #[allow(private_interfaces)]
-    fn core(&self) -> &CoreGraph;
+    fn core(&self) -> &MolGraph;
 
     /// Returns the core molecular graph in mutable form.
     #[allow(private_interfaces)]
-    fn core_mut(&mut self) -> &mut CoreGraph;
+    fn core_mut(&mut self) -> &mut MolGraph;
 
     // ID-related methods
     // These all just defer to the inner core struct
